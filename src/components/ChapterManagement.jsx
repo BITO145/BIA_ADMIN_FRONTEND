@@ -34,6 +34,7 @@ export default function ChapterManagement() {
     chapterLeadName: "",
     members: [],
   });
+  console.log(selectedChapter);
   // Fetch chapters from the backend API on component mount.
   useEffect(() => {
     const fetchChapters = async () => {
@@ -288,9 +289,13 @@ export default function ChapterManagement() {
             ) : selectedChapter.members &&
               selectedChapter.members.length > 0 ? (
               <ul className="space-y-2">
-                {selectedChapter.members.map((memberId) => (
-                  <li key={memberId} className="p-2 border rounded">
-                    <p className="font-medium">Member ID: {memberId}</p>
+                {selectedChapter.members.map((member) => (
+                  <li key={member.memberId} className="p-2 border rounded">
+                    <p className="font-medium">{member.name}</p>
+                    <p className="text-sm text-gray-500">{member.email}</p>
+                    {member.phone && (
+                      <p className="text-sm text-gray-500">📞 {member.phone}</p>
+                    )}
                   </li>
                 ))}
               </ul>
