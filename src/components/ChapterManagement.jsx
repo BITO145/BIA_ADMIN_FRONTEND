@@ -7,6 +7,7 @@ import {
   removeChapter,
   setChapterLoading,
   setChapterError,
+  updateChapterMember,
   selectChapters,
   selectChaptersLoading,
   selectChaptersError,
@@ -14,6 +15,7 @@ import {
 import {
   getChaptersService,
   addChapterService,
+  updateChapterMemberService,
 } from "../services/chapterService";
 
 export default function ChapterManagement() {
@@ -22,7 +24,6 @@ export default function ChapterManagement() {
   const loading = useSelector(selectChaptersLoading);
   const error = useSelector(selectChaptersError);
 
-  // Local UI state for modal and form
   const [showAddForm, setShowAddForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("members");
@@ -34,34 +35,28 @@ export default function ChapterManagement() {
     chapterLeadName: "",
     members: [],
   });
-  console.log(selectedChapter);
-  // Fetch chapters from the backend API on component mount.
+  console.log("Selected chapter object:", selectedChapter);
+
   useEffect(() => {
     const fetchChapters = async () => {
       try {
         dispatch(setChapterLoading(true));
         const response = await getChaptersService();
-        // Expecting response in the format: { chapters: [...] }
         dispatch(setChapters(response.chapters));
       } catch (err) {
-        console.error("Error fetching chapters:", err);
         dispatch(setChapterError("Error fetching chapters"));
       } finally {
         dispatch(setChapterLoading(false));
       }
     };
-
     fetchChapters();
   }, [dispatch]);
 
-  // Add a new chapter using the API
   const handleAddChapter = async (e) => {
     e.preventDefault();
     try {
       dispatch(setChapterLoading(true));
-      // Create a new chapter via API using the correct keys
       const response = await addChapterService(newChapter);
-      // Expecting response in format: { chapter: { ... } }
       dispatch(addChapter(response.chapter));
       setShowAddForm(false);
       setNewChapter({
@@ -71,31 +66,56 @@ export default function ChapterManagement() {
         chapterLeadName: "",
         members: [],
       });
-    } catch (err) {
-      console.error("Error adding chapter:", err);
+    } catch {
       dispatch(setChapterError("Error adding chapter"));
     } finally {
       dispatch(setChapterLoading(false));
     }
   };
 
-  // Delete chapter will integrate later
   const handleDeleteChapter = (id) => {
     dispatch(removeChapter(id));
   };
 
-  // View members for the selected chapter
   const handleViewMembers = (chapter) => {
     setSelectedChapter(chapter);
     setModalType("members");
     setShowModal(true);
   };
 
-  // View events for the selected chapter
   const handleViewEvents = (chapter) => {
     setSelectedChapter(chapter);
     setModalType("events");
     setShowModal(true);
+  };
+
+  // New: handle role change
+  const handleRoleChange = async (memberId, newRole) => {
+    try {
+      dispatch(setChapterLoading(true));
+      await updateChapterMemberService({
+        chapterId: selectedChapter._id,
+        memberId,
+        role: newRole,
+      });
+      dispatch(
+        updateChapterMember({
+          chapterId: selectedChapter.id,
+          memberId,
+          role: newRole,
+        })
+      );
+      setSelectedChapter((prev) => ({
+        ...prev,
+        members: prev.members.map((m) =>
+          m.memberId === memberId ? { ...m, role: newRole } : m
+        ),
+      }));
+    } catch {
+      dispatch(setChapterError("Error updating member role"));
+    } finally {
+      dispatch(setChapterLoading(false));
+    }
   };
 
   return (
@@ -106,8 +126,7 @@ export default function ChapterManagement() {
           onClick={() => setShowAddForm(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
         >
-          <Building2 className="w-5 h-5 mr-2" />
-          Add Chapter
+          <Building2 className="w-5 h-5 mr-2" /> Add Chapter
         </button>
       </div>
 
@@ -254,14 +273,12 @@ export default function ChapterManagement() {
         </table>
       </div>
 
-      {/* Modal for viewing members or events related to a chapter */}
       {showModal && selectedChapter && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">
-                {selectedChapter.chapterName}{" "}
-                {modalType === "events" ? "- Events" : "- Members"}
+                {selectedChapter.chapterName} - Members
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -270,32 +287,34 @@ export default function ChapterManagement() {
                 &times;
               </button>
             </div>
-            {modalType === "events" ? (
-              selectedChapter.events && selectedChapter.events.length > 0 ? (
-                <ul className="space-y-2">
-                  {selectedChapter.events.map((event) => (
-                    <li
-                      key={event._id || event.id}
-                      className="p-2 border rounded"
-                    >
-                      <p className="font-medium">{event.eventName}</p>
-                      <p className="text-sm text-gray-500">{event.eventDate}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500">No events available.</p>
-              )
-            ) : selectedChapter.members &&
-              selectedChapter.members.length > 0 ? (
-              <ul className="space-y-2">
+            {selectedChapter.members && selectedChapter.members.length > 0 ? (
+              <ul className="space-y-4">
                 {selectedChapter.members.map((member) => (
-                  <li key={member.memberId} className="p-2 border rounded">
-                    <p className="font-medium">{member.name}</p>
-                    <p className="text-sm text-gray-500">{member.email}</p>
-                    {member.phone && (
-                      <p className="text-sm text-gray-500">📞 {member.phone}</p>
-                    )}
+                  <li
+                    key={member.memberId}
+                    className="flex items-center justify-between p-4 border rounded-lg bg-gray-50"
+                  >
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {member.name}
+                      </p>
+                      <p className="text-sm text-gray-600">{member.email}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Role
+                      </label>
+                      <select
+                        value={member.role}
+                        onChange={(e) =>
+                          handleRoleChange(member.memberId, e.target.value)
+                        }
+                        className="mt-1 block w-36 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      >
+                        <option value="member">Member</option>
+                        <option value="committee">Committee Member</option>
+                      </select>
+                    </div>
                   </li>
                 ))}
               </ul>

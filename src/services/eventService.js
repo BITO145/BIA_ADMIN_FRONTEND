@@ -7,7 +7,7 @@ export const getEventsService = async () => {
       withCredentials: true,
     });
     console.log("[EventsService] GET events response:", response.data);
-    return response.data; // Expected format: { events: [...] }
+    return response.data;
   } catch (error) {
     console.error("[EventsService] Error fetching events:", error);
     throw error;
@@ -21,7 +21,7 @@ export const addEventService = async (eventData) => {
       headers: { "Content-Type": "application/json" },
     });
     console.log("[EventsService] POST add event response:", response.data);
-    return response.data; // Expected format: { event: { ... } }
+    return response.data; // Expected format: { event: { ... } } can be changed later lets keep it like this for now
   } catch (error) {
     console.error("[EventsService] Error adding event:", error);
     throw error;

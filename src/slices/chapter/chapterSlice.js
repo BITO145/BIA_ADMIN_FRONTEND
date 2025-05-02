@@ -21,11 +21,19 @@ const chapterSlice = createSlice({
         (chapter) => chapter.id !== action.payload
       );
     },
+
     setChapterLoading: (state, action) => {
       state.loading = action.payload;
     },
     setChapterError: (state, action) => {
       state.error = action.payload;
+    },
+    updateChapterMember: (state, action) => {
+      const { chapterId, memberId, role } = action.payload;
+      const chapter = state.data.find((c) => c.id === chapterId);
+      if (!chapter || !chapter.members) return;
+      const member = chapter.members.find((m) => m.memberId === memberId);
+      if (member) member.role = role;
     },
   },
 });
@@ -36,6 +44,7 @@ export const {
   removeChapter,
   setChapterLoading,
   setChapterError,
+  updateChapterMember,
 } = chapterSlice.actions;
 export default chapterSlice.reducer;
 

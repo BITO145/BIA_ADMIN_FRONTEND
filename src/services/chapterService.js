@@ -17,3 +17,17 @@ export const addChapterService = async (chapterData) => {
   });
   return response.data;
 };
+
+// new helper to call your PUT /sa/updaterole endpoint
+export const updateChapterMemberService = async ({
+  chapterId,
+  memberId,
+  role,
+}) => {
+  const { data } = await axios.post(
+    `${backendUrl}/sa/updaterole`,
+    { chapterId, memberId, newRole: role },
+    { withCredentials: true, headers: { "Content-Type": "application/json" } }
+  );
+  return data;
+};
