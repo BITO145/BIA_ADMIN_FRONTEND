@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Building2, Trash2, Users } from "lucide-react";
+import { Building2, Trash2, Users, X, PlusCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setChapters,
@@ -35,7 +35,6 @@ export default function ChapterManagement() {
     chapterLeadName: "",
     members: [],
   });
-  console.log("Selected chapter object:", selectedChapter);
 
   useEffect(() => {
     const fetchChapters = async () => {
@@ -89,7 +88,6 @@ export default function ChapterManagement() {
     setShowModal(true);
   };
 
-  // New: handle role change
   const handleRoleChange = async (memberId, newRole) => {
     try {
       dispatch(setChapterLoading(true));
@@ -124,97 +122,151 @@ export default function ChapterManagement() {
         <h2 className="text-2xl font-bold text-gray-900">Manage Chapters</h2>
         <button
           onClick={() => setShowAddForm(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200 shadow-sm"
         >
-          <Building2 className="w-5 h-5 mr-2" /> Add Chapter
+          <PlusCircle className="w-5 h-5 mr-2" /> Add Chapter
         </button>
       </div>
 
-      {loading && <p className="text-gray-500 mb-4">Loading...</p>}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {loading && (
+        <div className="flex justify-center my-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddForm && (
-        <form
-          onSubmit={handleAddChapter}
-          className="mb-8 bg-gray-50 p-4 rounded-lg"
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Chapter Name
-              </label>
-              <input
-                type="text"
-                required
-                value={newChapter.chapterName}
-                onChange={(e) =>
-                  setNewChapter({ ...newChapter, chapterName: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 overflow-hidden">
+            <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-white">
+                Create New Chapter
+              </h3>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="text-white hover:text-indigo-100 transition-colors duration-200"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Zone
-              </label>
-              <input
-                type="text"
-                required
-                value={newChapter.zone}
-                onChange={(e) =>
-                  setNewChapter({ ...newChapter, zone: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Lead Name
-              </label>
-              <input
-                type="text"
-                required
-                value={newChapter.chapterLeadName}
-                onChange={(e) =>
-                  setNewChapter({
-                    ...newChapter,
-                    chapterLeadName: e.target.value,
-                  })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                required
-                value={newChapter.description}
-                onChange={(e) =>
-                  setNewChapter({ ...newChapter, description: e.target.value })
-                }
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
+
+            <form onSubmit={handleAddChapter} className="p-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chapter Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newChapter.chapterName}
+                    onChange={(e) =>
+                      setNewChapter({
+                        ...newChapter,
+                        chapterName: e.target.value,
+                      })
+                    }
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Enter chapter name"
+                  />
+                </div>
+
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Zone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newChapter.zone}
+                    onChange={(e) =>
+                      setNewChapter({ ...newChapter, zone: e.target.value })
+                    }
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Enter zone name"
+                  />
+                </div>
+
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chapter Lead <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newChapter.chapterLeadName}
+                    onChange={(e) =>
+                      setNewChapter({
+                        ...newChapter,
+                        chapterLeadName: e.target.value,
+                      })
+                    }
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Enter lead's full name"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    required
+                    value={newChapter.description}
+                    onChange={(e) =>
+                      setNewChapter({
+                        ...newChapter,
+                        description: e.target.value,
+                      })
+                    }
+                    rows={4}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Describe this chapter's purpose and mission"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200 shadow-sm"
+                >
+                  Create Chapter
+                </button>
+              </div>
+            </form>
           </div>
-          <div className="mt-4 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              Add Chapter
-            </button>
-          </div>
-        </form>
+        </div>
       )}
 
       <div className="overflow-x-auto">
@@ -278,7 +330,8 @@ export default function ChapterManagement() {
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">
-                {selectedChapter.chapterName} - Members
+                {selectedChapter.chapterName} -{" "}
+                {modalType === "events" ? "Events" : "Members"}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -287,7 +340,25 @@ export default function ChapterManagement() {
                 &times;
               </button>
             </div>
-            {selectedChapter.members && selectedChapter.members.length > 0 ? (
+
+            {modalType === "events" ? (
+              selectedChapter.events && selectedChapter.events.length > 0 ? (
+                <ul className="space-y-2">
+                  {selectedChapter.events.map((event) => (
+                    <li
+                      key={event._id || event.id}
+                      className="p-2 border rounded"
+                    >
+                      <p className="font-medium">{event.eventName}</p>
+                      <p className="text-sm text-gray-500">{event.eventDate}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">No events available.</p>
+              )
+            ) : selectedChapter.members &&
+              selectedChapter.members.length > 0 ? (
               <ul className="space-y-4">
                 {selectedChapter.members.map((member) => (
                   <li

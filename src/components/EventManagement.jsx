@@ -33,7 +33,7 @@ export default function EventManagement() {
     eventDate: "",
     location: "",
     description: "",
-    membershipRequired: "gold", // default value via dropdown
+    membershipRequired: false, // default value via dropdown
     chapter: "", // chapter id string
   });
 
@@ -92,7 +92,7 @@ export default function EventManagement() {
         eventDate: "",
         location: "",
         description: "",
-        membershipRequired: "gold",
+        membershipRequired: false,
         chapter: "",
       });
     } catch (err) {
@@ -214,26 +214,28 @@ export default function EventManagement() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Membership Required
-              </label>
-              <select
-                required
-                value={newEvent.membershipRequired}
+            <div className="flex items-center mt-4">
+              <input
+                id="membershipRequired"
+                name="membershipRequired"
+                type="checkbox"
+                checked={newEvent.membershipRequired} // ✅ correct key
                 onChange={(e) =>
                   setNewEvent({
                     ...newEvent,
-                    membershipRequired: e.target.value,
+                    membershipRequired: e.target.checked, // ✅ correct key
                   })
                 }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+
+              <label
+                htmlFor="requiresMembership"
+                className="ml-2 block text-sm text-gray-700"
               >
-                <option value="gold">Gold</option>
-                <option value="diamond">Diamond</option>
-                <option value="platinum">Platinum</option>
-              </select>
+                This event requires membership
+              </label>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Chapter
@@ -330,7 +332,7 @@ export default function EventManagement() {
                     {event.location}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {event.membershipRequired}
+                    {event.requiresMembership ? "Yes" : "No"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
