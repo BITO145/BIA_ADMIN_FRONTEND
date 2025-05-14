@@ -7,6 +7,7 @@ import { logoutService } from "../services/authService";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectUser } from "../slices/auth/authSlice";
 import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("events");
@@ -20,12 +21,11 @@ const Dashboard = () => {
       console.log("Logout initiated...");
       await logoutService();
       dispatch(logout());
-      console.log("Logout successful, redirecting to login page...");
-      alert("logged out");
+      toast.success("Logout successful");
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("Logout failed. Please try again.");
+      toast.error("Logout failed. Please try again.");
     }
   };
 

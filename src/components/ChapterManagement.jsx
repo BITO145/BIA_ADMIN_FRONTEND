@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Building2, Trash2, Users, X, PlusCircle } from "lucide-react";
+import { Building2, Trash2, Users, X, PlusCircle, Info, User } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setChapters,
@@ -159,7 +159,7 @@ export default function ChapterManagement() {
       )}
 
       {showAddForm && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 overflow-hidden">
             <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-white">
@@ -176,76 +176,110 @@ export default function ChapterManagement() {
             <form onSubmit={handleAddChapter} className="p-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="chapterName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Chapter Name <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={newChapter.chapterName}
-                    onChange={(e) =>
-                      setNewChapter({
-                        ...newChapter,
-                        chapterName: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter chapter name"
-                  />
+                  <div className="relative">
+                    {/* You can add a generic icon if desired, like a tag */}
+                    <input
+                      type="text"
+                      id="chapterName"
+                      required
+                      value={newChapter.chapterName}
+                      onChange={(e) =>
+                        setNewChapter({
+                          ...newChapter,
+                          chapterName: e.target.value,
+                        })
+                      }
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-3 py-2"
+                      placeholder="Enter chapter name"
+                    />
+                  </div>
                 </div>
 
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="zone"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Zone <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={newChapter.zone}
-                    onChange={(e) =>
-                      setNewChapter({ ...newChapter, zone: e.target.value })
-                    }
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter zone name"
-                  />
+                  <div className="relative">
+                    {/* You can add a location icon if desired */}
+                    <input
+                      type="text"
+                      id="zone"
+                      required
+                      value={newChapter.zone}
+                      onChange={(e) =>
+                        setNewChapter({ ...newChapter, zone: e.target.value })
+                      }
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-3 py-2"
+                      placeholder="Enter zone name"
+                    />
+                  </div>
                 </div>
 
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="chapterLeadName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Chapter Lead <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={newChapter.chapterLeadName}
-                    onChange={(e) =>
-                      setNewChapter({
-                        ...newChapter,
-                        chapterLeadName: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter lead's full name"
-                  />
+                  <div className="relative">
+                    <User
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="text"
+                      id="chapterLeadName"
+                      required
+                      value={newChapter.chapterLeadName}
+                      onChange={(e) =>
+                        setNewChapter({
+                          ...newChapter,
+                          chapterLeadName: e.target.value,
+                        })
+                      }
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-10 py-2"
+                      placeholder="Enter lead's full name"
+                    />
+                  </div>
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Description <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    required
-                    value={newChapter.description}
-                    onChange={(e) =>
-                      setNewChapter({
-                        ...newChapter,
-                        description: e.target.value,
-                      })
-                    }
-                    rows={4}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Describe this chapter's purpose and mission"
-                  />
+                  <div className="relative">
+                    <Info
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <textarea
+                      id="description"
+                      required
+                      value={newChapter.description}
+                      onChange={(e) =>
+                        setNewChapter({
+                          ...newChapter,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-10 py-2"
+                      placeholder="Describe this chapter's purpose and mission"
+                    />
+                  </div>
                 </div>
               </div>
 
