@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { CalendarPlus, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  CalendarPlus,
+  Clock,
+  FileText,
+  Flag,
+  MapPin,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { convertTo12Hour } from "../utils/timeformat";
 import {
@@ -16,6 +25,7 @@ import { getEventsService, addEventService } from "../services/eventService";
 // Import chapters from Redux:
 import { setChapters, selectChapters } from "../slices/chapter/chapterSlice";
 import { getChaptersService } from "../services/chapterService";
+import toast from "react-hot-toast";
 
 export default function EventManagement() {
   const dispatch = useDispatch();
@@ -82,8 +92,7 @@ export default function EventManagement() {
       const response = await addEventService(newEvent);
       // Expected response: { event: { ... } }
       dispatch(addEvent(response.event));
-      console.log("Event added:", response.event);
-      alert("Event added successfully.");
+      toast.success("Event added successfully.");
       setShowAddForm(false);
       setNewEvent({
         eventName: "",
@@ -98,7 +107,7 @@ export default function EventManagement() {
     } catch (err) {
       console.error("Error adding event:", err);
       dispatch(setEventError("Error adding event"));
-      alert("Error adding event. Please try again.");
+      toast.error("Failed to add event. Please try again.");
     } finally {
       dispatch(setEventLoading(false));
     }
@@ -108,7 +117,7 @@ export default function EventManagement() {
   const handleDeleteEvent = (id) => {
     dispatch(removeEvent(id));
     console.log(`Event with id ${id} deleted`);
-    alert("Event deleted successfully.");
+    toast.success("Event deleted successfully.");
   };
 
   return (
@@ -125,154 +134,248 @@ export default function EventManagement() {
       </div>
 
       {showAddForm && (
-        <form
-          onSubmit={handleAddEvent}
-          className="mb-8 bg-gray-50 p-4 rounded-lg"
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Event Name
-              </label>
-              <input
-                type="text"
-                required
-                value={newEvent.eventName}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, eventName: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Date
-              </label>
-              <input
-                type="date"
-                required
-                value={newEvent.eventDate}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, eventDate: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Start Time
-              </label>
-              <input
-                type="time"
-                required
-                value={newEvent.eventStartTime}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, eventStartTime: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                End Time
-              </label>
-              <input
-                type="time"
-                required
-                value={newEvent.eventEndTime}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, eventEndTime: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Location
-              </label>
-              <input
-                type="text"
-                required
-                value={newEvent.location}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, location: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                required
-                value={newEvent.description}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, description: e.target.value })
-                }
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div className="flex items-center mt-4">
-              <input
-                id="membershipRequired"
-                name="membershipRequired"
-                type="checkbox"
-                checked={newEvent.membershipRequired} // ✅ correct key
-                onChange={(e) =>
-                  setNewEvent({
-                    ...newEvent,
-                    membershipRequired: e.target.checked, // ✅ correct key
-                  })
-                }
-              />
-
-              <label
-                htmlFor="requiresMembership"
-                className="ml-2 block text-sm text-gray-700"
+        <div className="fixed h-screen inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 h-screen md:h-auto overflow-y-auto">
+            <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-white">
+                Create New Event
+              </h3>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="text-white hover:text-indigo-100 transition-colors duration-200"
               >
-                This event requires membership
-              </label>
+                <X className="w-6 h-6" />
+              </button>
             </div>
+            <form
+              onSubmit={handleAddEvent}
+              className="p-4 rounded-lg"
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="eventName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Event Name
+                  </label>
+                  <div className="relative">
+                    <Flag
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="text"
+                      id="eventName"
+                      required
+                      value={newEvent.eventName}
+                      onChange={(e) =>
+                        setNewEvent({ ...newEvent, eventName: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="eventDate"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Date
+                  </label>
+                  <div className="relative">
+                    <Calendar
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="date"
+                      id="eventDate"
+                      required
+                      value={newEvent.eventDate}
+                      onChange={(e) =>
+                        setNewEvent({ ...newEvent, eventDate: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="eventStartTime"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Start Time
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="time"
+                      id="eventStartTime"
+                      required
+                      value={newEvent.eventStartTime}
+                      onChange={(e) =>
+                        setNewEvent({
+                          ...newEvent,
+                          eventStartTime: e.target.value,
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="eventEndTime"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    End Time
+                  </label>
+                  <div className="relative">
+                    <Clock
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="time"
+                      id="eventEndTime"
+                      required
+                      value={newEvent.eventEndTime}
+                      onChange={(e) =>
+                        setNewEvent({
+                          ...newEvent,
+                          eventEndTime: e.target.value,
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Location
+                  </label>
+                  <div className="relative">
+                    <MapPin
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="text"
+                      id="location"
+                      required
+                      value={newEvent.location}
+                      onChange={(e) =>
+                        setNewEvent({ ...newEvent, location: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Description
+                  </label>
+                  <div className="relative">
+                    <FileText
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <textarea
+                      id="description"
+                      required
+                      value={newEvent.description}
+                      onChange={(e) =>
+                        setNewEvent({
+                          ...newEvent,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={3}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center mt-4">
+                  <input
+                    id="membershipRequired"
+                    name="membershipRequired"
+                    type="checkbox"
+                    checked={newEvent.membershipRequired}
+                    onChange={(e) =>
+                      setNewEvent({
+                        ...newEvent,
+                        membershipRequired: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label
+                    htmlFor="requiresMembership"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
+                    This event requires membership
+                  </label>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Chapter
-              </label>
-              <select
-                required
-                value={newEvent.chapter}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, chapter: e.target.value })
-                }
-                className="mt-1 block w-full ..."
-              >
-                <option value="">Select Chapter</option>
-                {chaptersList.map((chapter) => (
-                  <option key={chapter._id} value={chapter._id}>
-                    {chapter.chapterName}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div>
+                  <label
+                    htmlFor="chapter"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Chapter
+                  </label>
+                  <div className="relative">
+                    <Flag
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <select
+                      id="chapter"
+                      required
+                      value={newEvent.chapter}
+                      onChange={(e) =>
+                        setNewEvent({ ...newEvent, chapter: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    >
+                      <option value="">Select Chapter</option>
+                      {chaptersList.map((chapter) => (
+                        <option key={chapter._id} value={chapter._id}>
+                          {chapter.chapterName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Add Event
+                </button>
+              </div>
+            </form>
           </div>
-          <div className="mt-4 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              Add Event
-            </button>
-          </div>
-        </form>
+        </div>
       )}
 
       <div className="overflow-x-auto">
