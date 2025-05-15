@@ -18,7 +18,6 @@ export const addEventService = async (eventData) => {
   try {
     const response = await axios.post(`${backendUrl}/sa/event`, eventData, {
       withCredentials: true,
-      headers: { "Content-Type": "application/json" },
     });
     console.log("[EventsService] POST add event response:", response.data);
     return response.data; // Expected format: { event: { ... } } can be changed later lets keep it like this for now

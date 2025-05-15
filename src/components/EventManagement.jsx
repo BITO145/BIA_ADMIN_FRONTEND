@@ -7,6 +7,7 @@ import {
   Flag,
   MapPin,
   Trash2,
+  UploadCloud,
   X,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -89,21 +90,54 @@ export default function EventManagement() {
     e.preventDefault();
     try {
       dispatch(setEventLoading(true));
-      const response = await addEventService(newEvent);
-      // Expected response: { event: { ... } }
-      dispatch(addEvent(response.event));
-      toast.success("Event added successfully.");
-      setShowAddForm(false);
-      setNewEvent({
-        eventName: "",
-        eventStartTime: "",
-        eventEndTime: "",
-        eventDate: "",
-        location: "",
-        description: "",
-        membershipRequired: false,
-        chapter: "",
-      });
+
+      if (
+        !newEvent.eventName ||
+        !newEvent.eventDate ||
+        !newEvent.eventStartTime ||
+        !newEvent.eventEndTime ||
+        !newEvent.location ||
+        !newEvent.chapter ||
+        !newEvent.image
+      ) {
+        toast.error("Please fill in all required fields.");
+        return;
+      }
+
+      // Prepare FormData payload
+      const formData = new FormData();
+      formData.append("eventName", newEvent.eventName);
+      formData.append("eventStartTime", newEvent.eventStartTime);
+      formData.append("eventEndTime", newEvent.eventEndTime);
+      formData.append("eventDate", newEvent.eventDate);
+      formData.append("location", newEvent.location);
+      formData.append("image", newEvent.image);
+      formData.append("description", newEvent.description);
+      formData.append(
+        "membershipRequired",
+        newEvent.membershipRequired.toString()
+      );
+      formData.append("chapter", newEvent.chapter);
+
+      const response = await addEventService(formData);
+
+      if (response.success) {
+        dispatch(addEvent(response.event));
+        toast.success("Event added successfully.");
+
+        setShowAddForm(false);
+        setNewEvent({
+          eventName: "",
+          eventStartTime: "",
+          eventEndTime: "",
+          eventDate: "",
+          location: "",
+          description: "",
+          membershipRequired: false,
+          chapter: "",
+          image: "",
+        });
+      }
     } catch (err) {
       console.error("Error adding event:", err);
       dispatch(setEventError("Error adding event"));
@@ -135,7 +169,7 @@ export default function EventManagement() {
 
       {showAddForm && (
         <div className="fixed h-screen inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 h-screen md:h-auto overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-screen overflow-y-auto">
             <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-white">
                 Create New Event
@@ -147,10 +181,7 @@ export default function EventManagement() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form
-              onSubmit={handleAddEvent}
-              className="p-4 rounded-lg"
-            >
+            <form onSubmit={handleAddEvent} className="p-4 rounded-lg">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label
@@ -280,6 +311,52 @@ export default function EventManagement() {
                 </div>
                 <div className="sm:col-span-2">
                   <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Upload Image
+                  </label>
+                  <div className="relative">
+                    <UploadCloud
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="file"
+                      id="image"
+                      accept="image/*"
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files[0];
+                        if (file) {
+                          setNewEvent({ ...newEvent, image: file });
+                        }
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onChange={(e) =>
+                        setNewEvent({
+                          ...newEvent,
+                          image: e.target.files[0],
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                    <span className="text-sm text-gray-500">
+                      Upload an image for the event
+                    </span>
+                  </div>
+                </div>
+                {newEvent.image && (
+                  <div className="sm:col-span-2">
+                    <img
+                      className="mt-2 w-full h-32 object-cover rounded-md"
+                      src={URL.createObjectURL(newEvent.image)}
+                      alt=""
+                    />
+                  </div>
+                )}
+                <div className="sm:col-span-2">
+                  <label
                     htmlFor="description"
                     className="block text-sm font-medium text-gray-700"
                   >
@@ -370,7 +447,33 @@ export default function EventManagement() {
                   type="submit"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                 >
-                  Add Event
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>Loading...</span>
+                    </span>
+                  ) : (
+                    "Create Event"
+                  )}
                 </button>
               </div>
             </form>

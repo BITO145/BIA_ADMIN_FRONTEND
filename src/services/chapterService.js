@@ -13,7 +13,6 @@ export const addChapterService = async (chapterData) => {
   // API endpoint to add a new chapter
   const response = await axios.post(`${backendUrl}/sa/chapter`, chapterData, {
     withCredentials: true,
-    headers: { "Content-Type": "application/json" },
   });
   return response.data;
 };
