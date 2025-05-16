@@ -76,6 +76,14 @@ export default function SubAdminManagement() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center my-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">

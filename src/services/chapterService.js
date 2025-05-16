@@ -30,3 +30,21 @@ export const updateChapterMemberService = async ({
   );
   return data;
 };
+
+export const deleteChapterService = async (chapterId) => {
+  const { data } = await axios.post(
+    `${backendUrl}/sa/delChap/${chapterId}`,
+    {},
+    { withCredentials: true }
+  );
+  return data;
+};
+
+export const deleteEventService = async (eventId) => {
+  const { data } = await axios.post(
+    `${backendUrl}/sa/delEvent/${eventId}`,
+    {},
+    { withCredentials: true }
+  );
+  return data;
+};

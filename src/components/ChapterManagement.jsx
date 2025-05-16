@@ -25,6 +25,7 @@ import {
   getChaptersService,
   addChapterService,
   updateChapterMemberService,
+  deleteChapterService,
 } from "../services/chapterService";
 import toast from "react-hot-toast";
 
@@ -35,6 +36,7 @@ export default function ChapterManagement() {
   const error = useSelector(selectChaptersError);
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("members");
   const [selectedChapter, setSelectedChapter] = useState(null);
@@ -47,18 +49,19 @@ export default function ChapterManagement() {
     image: "",
   });
 
+  const fetchChapters = async () => {
+    try {
+      dispatch(setChapterLoading(true));
+      const response = await getChaptersService();
+      dispatch(setChapters(response.chapters));
+    } catch (err) {
+      dispatch(setChapterError("Error fetching chapters"));
+    } finally {
+      dispatch(setChapterLoading(false));
+    }
+  };
+
   useEffect(() => {
-    const fetchChapters = async () => {
-      try {
-        dispatch(setChapterLoading(true));
-        const response = await getChaptersService();
-        dispatch(setChapters(response.chapters));
-      } catch (err) {
-        dispatch(setChapterError("Error fetching chapters"));
-      } finally {
-        dispatch(setChapterLoading(false));
-      }
-    };
     fetchChapters();
   }, [dispatch]);
 
@@ -98,8 +101,25 @@ export default function ChapterManagement() {
     }
   };
 
-  const handleDeleteChapter = (id) => {
+  const handleDeleteChapter = async (id) => {
     dispatch(removeChapter(id));
+    try {
+      dispatch(setChapterLoading(true));
+      const response = await deleteChapterService(id);
+      if (response.success) {
+        toast.success("Chapter deleted successfully!");
+        fetchChapters();
+      } else {
+        toast.error("Failed to delete chapter. Please try again.");
+      }
+    } catch {
+      dispatch(setChapterError("Error deleting chapter"));
+      toast.error("Failed to delete chapter. Please try again.");
+    } finally {
+      dispatch(setChapterLoading(false));
+      setShowDeleteModal(false);
+      setSelectedChapter(null);
+    }
   };
 
   const handleViewMembers = (chapter) => {
@@ -142,8 +162,65 @@ export default function ChapterManagement() {
     }
   };
 
+  const extractDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Are you sure you want to delete this chapter?
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This action cannot be undone. All associated data will be lost.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteChapter(selectedChapter._id)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 shadow-sm"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    <span>Deleting...</span>
+                  </span>
+                ) : (
+                  "Delete Chapter"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Manage Chapters</h2>
         <button
@@ -153,12 +230,6 @@ export default function ChapterManagement() {
           <PlusCircle className="w-5 h-5 mr-2" /> Add Chapter
         </button>
       </div>
-
-      {loading && (
-        <div className="flex justify-center my-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
-      )}
 
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
@@ -402,65 +473,93 @@ export default function ChapterManagement() {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Chapter Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Zone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Lead Name
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {chaptersList.map((chapter) => (
-              <tr key={chapter.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {chapter.chapterName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {chapter.zone}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {chapter.chapterLeadName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleViewMembers(chapter)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    <Users className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleViewEvents(chapter)}
-                    className="text-green-600 hover:text-green-900 mr-4"
-                  >
-                    Events
-                  </button>
-                  <button
-                    onClick={() => handleDeleteChapter(chapter.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </td>
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <svg
+            className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Chapter Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Zone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Lead Name
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {chaptersList.map((chapter) => (
+                <tr key={chapter.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {chapter.chapterName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {chapter.zone}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {chapter.chapterLeadName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleViewMembers(chapter)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      <Users className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleViewEvents(chapter)}
+                      className="text-green-600 hover:text-green-900 mr-4"
+                    >
+                      Events
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDeleteModal(true);
+                        setSelectedChapter(chapter);
+                      }}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {showModal && selectedChapter && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-gray-100 rounded-lg p-6 max-w-2xl w-full">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">
                 {selectedChapter.chapterName} -{" "}
@@ -483,7 +582,9 @@ export default function ChapterManagement() {
                       className="p-2 border rounded"
                     >
                       <p className="font-medium">{event.eventName}</p>
-                      <p className="text-sm text-gray-500">{event.eventDate}</p>
+                      <p className="text-sm text-gray-500">
+                        {extractDate(event.eventDate)}
+                      </p>
                     </li>
                   ))}
                 </ul>
