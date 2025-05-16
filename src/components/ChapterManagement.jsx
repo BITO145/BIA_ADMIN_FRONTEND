@@ -28,6 +28,7 @@ import {
   deleteChapterService,
 } from "../services/chapterService";
 import toast from "react-hot-toast";
+import { Switch } from "@headlessui/react";
 
 export default function ChapterManagement() {
   const dispatch = useDispatch();
@@ -605,20 +606,45 @@ export default function ChapterManagement() {
                       </p>
                       <p className="text-sm text-gray-600">{member.email}</p>
                     </div>
-                    <div>
+                    <div className="flex items-center space-x-4">
                       <label className="block text-sm font-medium text-gray-700">
                         Role
                       </label>
-                      <select
-                        value={member.role}
-                        onChange={(e) =>
-                          handleRoleChange(member.memberId, e.target.value)
-                        }
-                        className="mt-1 block w-36 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="member">Member</option>
-                        <option value="committee">Committee Member</option>
-                      </select>
+                      <Switch.Group>
+                        <div className="flex items-center">
+                          <Switch
+                            checked={member.role === "committee"}
+                            onChange={() =>
+                              handleRoleChange(
+                                member.memberId,
+                                member.role === "member"
+                                  ? "committee"
+                                  : "member"
+                              )
+                            }
+                            className={`${
+                              member.role === "committee"
+                                ? "bg-indigo-600"
+                                : "bg-gray-200"
+                            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                          >
+                            <span className="sr-only">Toggle committee status</span>
+                            <span
+                              className={`${
+                                member.role === "committee"
+                                  ? "translate-x-5"
+                                  : "translate-x-0"
+                              } inline-block h-5 w-5 transform rounded-full bg-white transition-transform`}
+                              aria-hidden="true"
+                            />
+                          </Switch>
+                          <span className="ml-2 text-sm text-gray-500">
+                            {member.role === "committee"
+                              ? "Committee"
+                              : "Member"}
+                          </span>
+                        </div>
+                      </Switch.Group>
                     </div>
                   </li>
                 ))}
