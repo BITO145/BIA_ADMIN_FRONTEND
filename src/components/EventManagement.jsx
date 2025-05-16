@@ -7,6 +7,7 @@ import {
   Flag,
   MapPin,
   Trash2,
+  UploadCloud,
   X,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,7 +25,10 @@ import {
 import { getEventsService, addEventService } from "../services/eventService";
 // Import chapters from Redux:
 import { setChapters, selectChapters } from "../slices/chapter/chapterSlice";
-import { getChaptersService } from "../services/chapterService";
+import {
+  deleteEventService,
+  getChaptersService,
+} from "../services/chapterService";
 import toast from "react-hot-toast";
 
 export default function EventManagement() {
@@ -34,6 +38,8 @@ export default function EventManagement() {
   const error = useSelector(selectEventsError);
   // Fetch chapters from Redux
   const chaptersList = useSelector(selectChapters);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteEventId, setDeleteEventId] = useState(null);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -48,22 +54,21 @@ export default function EventManagement() {
   });
 
   // Fetch events on component mount
+  const fetchEvents = async () => {
+    try {
+      dispatch(setEventLoading(true));
+      const response = await getEventsService();
+      // Expected response: { events: [...] }
+      dispatch(setEvents(response.events));
+      console.log("Fetched events from backend:", response.events);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      dispatch(setEventError("Error fetching events"));
+    } finally {
+      dispatch(setEventLoading(false));
+    }
+  };
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        dispatch(setEventLoading(true));
-        const response = await getEventsService();
-        // Expected response: { events: [...] }
-        dispatch(setEvents(response.events));
-        console.log("Fetched events from backend:", response.events);
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        dispatch(setEventError("Error fetching events"));
-      } finally {
-        dispatch(setEventLoading(false));
-      }
-    };
-
     fetchEvents();
   }, [dispatch]);
 
@@ -89,21 +94,54 @@ export default function EventManagement() {
     e.preventDefault();
     try {
       dispatch(setEventLoading(true));
-      const response = await addEventService(newEvent);
-      // Expected response: { event: { ... } }
-      dispatch(addEvent(response.event));
-      toast.success("Event added successfully.");
-      setShowAddForm(false);
-      setNewEvent({
-        eventName: "",
-        eventStartTime: "",
-        eventEndTime: "",
-        eventDate: "",
-        location: "",
-        description: "",
-        membershipRequired: false,
-        chapter: "",
-      });
+
+      if (
+        !newEvent.eventName ||
+        !newEvent.eventDate ||
+        !newEvent.eventStartTime ||
+        !newEvent.eventEndTime ||
+        !newEvent.location ||
+        !newEvent.chapter ||
+        !newEvent.image
+      ) {
+        toast.error("Please fill in all required fields.");
+        return;
+      }
+
+      // Prepare FormData payload
+      const formData = new FormData();
+      formData.append("eventName", newEvent.eventName);
+      formData.append("eventStartTime", newEvent.eventStartTime);
+      formData.append("eventEndTime", newEvent.eventEndTime);
+      formData.append("eventDate", newEvent.eventDate);
+      formData.append("location", newEvent.location);
+      formData.append("image", newEvent.image);
+      formData.append("description", newEvent.description);
+      formData.append(
+        "membershipRequired",
+        newEvent.membershipRequired.toString()
+      );
+      formData.append("chapter", newEvent.chapter);
+
+      const response = await addEventService(formData);
+
+      if (response.success) {
+        dispatch(addEvent(response.event));
+        toast.success("Event added successfully.");
+
+        setShowAddForm(false);
+        setNewEvent({
+          eventName: "",
+          eventStartTime: "",
+          eventEndTime: "",
+          eventDate: "",
+          location: "",
+          description: "",
+          membershipRequired: false,
+          chapter: "",
+          image: "",
+        });
+      }
     } catch (err) {
       console.error("Error adding event:", err);
       dispatch(setEventError("Error adding event"));
@@ -114,14 +152,82 @@ export default function EventManagement() {
   };
 
   // Handler to delete an event
-  const handleDeleteEvent = (id) => {
+  const handleDeleteEvent = async (id) => {
     dispatch(removeEvent(id));
-    console.log(`Event with id ${id} deleted`);
-    toast.success("Event deleted successfully.");
+    try {
+      dispatch(setEventLoading(true));
+      const response = await deleteEventService(id);
+      if (response.success) {
+        toast.success("Event deleted successfully.");
+        fetchEvents(); // Refresh the events list
+      } else {
+        toast.error("Failed to delete event. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      dispatch(setEventError("Error deleting event"));
+      toast.error("Failed to delete event. Please try again.");
+    } finally {
+      dispatch(setEventLoading(false));
+      setShowDeleteModal(false);
+      setDeleteEventId(null);
+    }
   };
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Are you sure you want to delete this event?
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This action cannot be undone. All associated data will be lost.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteEvent(deleteEventId)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 shadow-sm"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    <span>Deleting...</span>
+                  </span>
+                ) : (
+                  "Delete Event"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Manage Events</h2>
         <button
@@ -135,7 +241,7 @@ export default function EventManagement() {
 
       {showAddForm && (
         <div className="fixed h-screen inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 h-screen md:h-auto overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-screen overflow-y-auto">
             <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-white">
                 Create New Event
@@ -147,10 +253,7 @@ export default function EventManagement() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form
-              onSubmit={handleAddEvent}
-              className="p-4 rounded-lg"
-            >
+            <form onSubmit={handleAddEvent} className="p-4 rounded-lg">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label
@@ -280,6 +383,52 @@ export default function EventManagement() {
                 </div>
                 <div className="sm:col-span-2">
                   <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Upload Image
+                  </label>
+                  <div className="relative">
+                    <UploadCloud
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="file"
+                      id="image"
+                      accept="image/*"
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files[0];
+                        if (file) {
+                          setNewEvent({ ...newEvent, image: file });
+                        }
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onChange={(e) =>
+                        setNewEvent({
+                          ...newEvent,
+                          image: e.target.files[0],
+                        })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                    <span className="text-sm text-gray-500">
+                      Upload an image for the event
+                    </span>
+                  </div>
+                </div>
+                {newEvent.image && (
+                  <div className="sm:col-span-2">
+                    <img
+                      className="mt-2 w-full h-32 object-cover rounded-md"
+                      src={URL.createObjectURL(newEvent.image)}
+                      alt=""
+                    />
+                  </div>
+                )}
+                <div className="sm:col-span-2">
+                  <label
                     htmlFor="description"
                     className="block text-sm font-medium text-gray-700"
                   >
@@ -370,7 +519,33 @@ export default function EventManagement() {
                   type="submit"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                 >
-                  Add Event
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>Loading...</span>
+                    </span>
+                  ) : (
+                    "Create Event"
+                  )}
                 </button>
               </div>
             </form>
@@ -378,79 +553,107 @@ export default function EventManagement() {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Event Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Start Time
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                End Time
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Location
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Membership
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {eventsList.map((event) => {
-              // Parse date for display.
-              let displayDate = "Invalid Date";
-              const dateObj = new Date(event.eventDate);
-              if (!isNaN(dateObj.getTime())) {
-                displayDate = dateObj.toLocaleDateString();
-              }
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <svg
+            className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Event Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Start Time
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  End Time
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Membership
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {eventsList.map((event) => {
+                // Parse date for display.
+                let displayDate = "Invalid Date";
+                const dateObj = new Date(event.eventDate);
+                if (!isNaN(dateObj.getTime())) {
+                  displayDate = dateObj.toLocaleDateString();
+                }
 
-              const displayStartTime = convertTo12Hour(event.eventStartTime);
-              const displayEndTime = convertTo12Hour(event.eventEndTime);
+                const displayStartTime = convertTo12Hour(event.eventStartTime);
+                const displayEndTime = convertTo12Hour(event.eventEndTime);
 
-              return (
-                <tr key={event.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {event.eventName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {displayDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {displayStartTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {displayEndTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {event.location}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {event.requiresMembership ? "Yes" : "No"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleDeleteEvent(event.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                return (
+                  <tr key={event.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {event.eventName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {displayDate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {displayStartTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {displayEndTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {event.location}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {event.requiresMembership ? "Yes" : "No"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => {
+                          setDeleteEventId(event._id);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

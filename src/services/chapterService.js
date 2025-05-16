@@ -13,7 +13,6 @@ export const addChapterService = async (chapterData) => {
   // API endpoint to add a new chapter
   const response = await axios.post(`${backendUrl}/sa/chapter`, chapterData, {
     withCredentials: true,
-    headers: { "Content-Type": "application/json" },
   });
   return response.data;
 };
@@ -28,6 +27,24 @@ export const updateChapterMemberService = async ({
     `${backendUrl}/sa/updaterole`,
     { chapterId, memberId, newRole: role },
     { withCredentials: true, headers: { "Content-Type": "application/json" } }
+  );
+  return data;
+};
+
+export const deleteChapterService = async (chapterId) => {
+  const { data } = await axios.post(
+    `${backendUrl}/sa/delChap/${chapterId}`,
+    {},
+    { withCredentials: true }
+  );
+  return data;
+};
+
+export const deleteEventService = async (eventId) => {
+  const { data } = await axios.post(
+    `${backendUrl}/sa/delEvent/${eventId}`,
+    {},
+    { withCredentials: true }
   );
   return data;
 };
