@@ -60,7 +60,6 @@ export default function EventManagement() {
       const response = await getEventsService();
       // Expected response: { events: [...] }
       dispatch(setEvents(response.events));
-      console.log("Fetched events from backend:", response.events);
     } catch (err) {
       console.error("Error fetching events:", err);
       dispatch(setEventError("Error fetching events"));
@@ -80,7 +79,6 @@ export default function EventManagement() {
           const response = await getChaptersService();
           // Expected response: { chapters: [...] }
           dispatch(setChapters(response.chapters));
-          console.log("Fetched chapters from backend:", response.chapters);
         } catch (err) {
           console.error("Error fetching chapters:", err);
         }

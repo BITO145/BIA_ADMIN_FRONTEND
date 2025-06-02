@@ -18,7 +18,6 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
-      console.log("Logout initiated...");
       await logoutService();
       dispatch(logout());
       toast.success("Logout successful");

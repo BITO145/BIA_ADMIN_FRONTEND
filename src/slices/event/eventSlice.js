@@ -13,23 +13,18 @@ const eventsSlice = createSlice({
   reducers: {
     setEvents: (state, action) => {
       state.data = action.payload;
-      console.log("[EventsSlice] setEvents:", state.data);
     },
     addEvent: (state, action) => {
       state.data.push(action.payload);
-      console.log("[EventsSlice] addEvent:", action.payload);
     },
     removeEvent: (state, action) => {
       state.data = state.data.filter((event) => event.id !== action.payload);
-      console.log("[EventsSlice] removeEvent id:", action.payload);
     },
     setEventLoading: (state, action) => {
       state.loading = action.payload;
-      console.log("[EventsSlice] setEventLoading:", state.loading);
     },
     setEventError: (state, action) => {
       state.error = action.payload;
-      console.log("[EventsSlice] setEventError:", state.error);
     },
   },
 });

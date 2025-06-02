@@ -6,7 +6,7 @@ export const getEventsService = async () => {
     const response = await axios.get(`${backendUrl}/sa/get-event`, {
       withCredentials: true,
     });
-    console.log("[EventsService] GET events response:", response.data);
+    ("[EventsService] GET events response:", response.data);
     return response.data;
   } catch (error) {
     console.error("[EventsService] Error fetching events:", error);
@@ -19,7 +19,6 @@ export const addEventService = async (eventData) => {
     const response = await axios.post(`${backendUrl}/sa/event`, eventData, {
       withCredentials: true,
     });
-    console.log("[EventsService] POST add event response:", response.data);
     return response.data; // Expected format: { event: { ... } } can be changed later lets keep it like this for now
   } catch (error) {
     console.error("[EventsService] Error adding event:", error);

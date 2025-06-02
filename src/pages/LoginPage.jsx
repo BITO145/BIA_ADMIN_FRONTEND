@@ -69,7 +69,6 @@ const LoginPage = () => {
         username: formData.username,
         password: formData.password,
       });
-      console.log("Login data received:", data);
       dispatch(loginSuccess(data.user));
       toast.success("Login successful");
       navigate("/dashboard");
