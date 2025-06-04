@@ -559,7 +559,145 @@ export default function ChapterManagement() {
         </div>
       )}
 
-      {showModal && selectedChapter && (
+  {showModal && selectedChapter && (
+  <div className="fixed inset-0 bg-gray-300/10 bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50"> {/* Enhanced backdrop and z-index */}
+    <div className="bg-white rounded-xl shadow-2xl p-6 md:p-8 max-w-2xl w-full transform transition-all duration-300 scale-100 opacity-100"> {/* Professional modal container */}
+      <div className="flex justify-between items-center border-b pb-4 mb-4"> {/* Stylish header with border */}
+        <h3 className="text-2xl font-extrabold text-gray-900"> {/* Larger, bolder title */}
+          {selectedChapter.chapterName} -{" "}
+          <span className="text-indigo-600"> {/* Highlighted type */}
+            {modalType === "events" ? "Events" : "Members"}
+          </span>
+        </h3>
+        <button
+          onClick={() => setShowModal(false)}
+          className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full p-1 transition-colors" // Enhanced close button
+          aria-label="Close modal"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {modalType === "events" ? (
+        selectedChapter.events && selectedChapter.events.length > 0 ? (
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-2"> {/* Added max-height and scroll for events */}
+            {selectedChapter.events.map((event) => (
+              <div
+                key={event._id || event.id}
+                className="bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:shadow-lg hover:border-indigo-300" // Enhanced card styling
+              >
+                <p className="font-semibold text-lg text-gray-800 mb-1">
+                  {event.eventName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium text-indigo-500">Date:</span> {extractDate(event.eventDate)}
+                </p>
+                {/* Add more event details here if available, e.g., location, description */}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-600 text-center py-8 text-lg">No events available for this chapter.</p>
+        )
+      ) : selectedChapter.members && selectedChapter.members.length > 0 ? (
+        <ul className="space-y-4 max-h-96 overflow-y-auto pr-2"> {/* Added max-height and scroll for members */}
+          {selectedChapter.members.map((member) => (
+            <li
+              key={member.memberId}
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-indigo-300" // Enhanced member card
+            >
+              <div>
+                <p className="font-bold text-gray-900 text-lg">
+                  {member.name}
+                </p>
+                <p className="text-sm text-gray-600">{member.email}</p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Role
+                </label>
+                <Switch.Group>
+                  <div className="flex items-center">
+                    {loading && currMemberId === member.memberId ? (
+                      <div>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      </div>
+                    ) : (
+                      <Switch
+                        checked={member.role === "committee"}
+                        onChange={() => {
+                          handleRoleChange(
+                            member.memberId,
+                            member.role === "member" ? "committee" : "member"
+                          );
+                          setCurrMemberId(member.memberId);
+                        }}
+                        className={`${
+                          member.role === "committee"
+                            ? "bg-indigo-600"
+                            : "bg-gray-300" // Slightly darker gray for off state
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`} // Added focus ring offset
+                      >
+                        <span className="sr-only">Toggle committee status</span>
+                        <span
+                          className={`${
+                            member.role === "committee"
+                              ? "translate-x-5"
+                              : "translate-x-0"
+                          } inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform`} // Added shadow to toggle thumb
+                          aria-hidden="true"
+                        />
+                      </Switch>
+                    )}
+                    <span className="ml-2 text-sm text-gray-700 font-medium"> {/* Slightly darker text for role */}
+                      {member.role === "committee" ? "Committee" : "Member"}
+                    </span>
+                  </div>
+                </Switch.Group>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-gray-600 text-center py-8 text-lg">No members available for this chapter.</p>
+      )}
+    </div>
+  </div>
+)}
+
+      {/* {showModal && selectedChapter && (
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-gray-100 rounded-lg p-6 max-w-2xl w-full">
             <div className="flex justify-between items-center mb-4">
@@ -683,7 +821,7 @@ export default function ChapterManagement() {
             )}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
