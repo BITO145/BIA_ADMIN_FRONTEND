@@ -1,17 +1,15 @@
 export function convertTo12Hour(timeString) {
-  // If timeString is empty or invalid, return an empty string.
   if (!timeString) return "";
 
-  // Example input: "09:00:00" or "09:00".
-  const [hourStr, minuteStr] = timeString.split(":");
-  if (!hourStr || !minuteStr) return timeString; // Fallback to raw input if parsing fails.
+  const date = new Date(timeString);
+  if (isNaN(date.getTime())) return timeString; // Invalid date fallback
 
-  let hour = parseInt(hourStr, 10);
-  const minute = parseInt(minuteStr, 10);
+  let hours = date.getUTCHours(); // Use getHours() for local time, getUTCHours() for UTC
+  const minutes = date.getUTCMinutes(); // Same note as above
 
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12; // Convert "0" to "12", "13" to "1", etc.
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
 
-  // Return a string in the format "9:00 AM".
-  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+  return `${hours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
 }
+
