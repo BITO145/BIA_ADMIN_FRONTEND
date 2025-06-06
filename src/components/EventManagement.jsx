@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   CalendarPlus,
   Clock,
   FileText,
   Flag,
+  Link,
   MapPin,
   Trash2,
   UploadCloud,
+  Users,
   X,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,6 +46,8 @@ export default function EventManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEvent, setNewEvent] = useState({
     eventName: "",
+    slots: 0, // default value via dropdown
+    link: "",
     eventStartTime: "",
     eventEndTime: "",
     eventDate: "",
@@ -95,6 +99,7 @@ export default function EventManagement() {
 
       if (
         !newEvent.eventName ||
+        !newEvent.link ||
         !newEvent.eventDate ||
         !newEvent.eventStartTime ||
         !newEvent.eventEndTime ||
@@ -106,9 +111,16 @@ export default function EventManagement() {
         return;
       }
 
+      if (newEvent.membershipRequired && newEvent.slots <= 0) {
+        toast.error("Slots must be greater than 0 for membership required events.");
+        return;
+      }
+
       // Prepare FormData payload
       const formData = new FormData();
       formData.append("eventName", newEvent.eventName);
+      formData.append("slots", newEvent.slots);
+      formData.append("link", newEvent.link);
       formData.append("eventStartTime", newEvent.eventStartTime);
       formData.append("eventEndTime", newEvent.eventEndTime);
       formData.append("eventDate", newEvent.eventDate);
@@ -117,7 +129,7 @@ export default function EventManagement() {
       formData.append("description", newEvent.description);
       formData.append(
         "membershipRequired",
-        newEvent.membershipRequired.toString()
+        newEvent.membershipRequired
       );
       formData.append("chapter", newEvent.chapter);
 
@@ -379,9 +391,58 @@ export default function EventManagement() {
                     />
                   </div>
                 </div>
+                <div>
+                  <label
+                    htmlFor="slots"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Slots
+                  </label>
+                  <div className="relative">
+                    <Users
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="number"
+                      id="slots"
+                      required
+                      value={newEvent.slots}
+                      onChange={(e) =>
+                        setNewEvent({ ...newEvent, slots: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                    <span className="text-gray-400 text-xs">(If membership is not required then no need to add slots)</span>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="link"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Event Link
+                  </label>
+                  <div className="relative">
+                    <Link
+                      className="absolute left-3 top-2.5 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="text"
+                      id="link"
+                      required
+                      value={newEvent.link}
+                      onChange={(e) =>
+                        setNewEvent({ ...newEvent, link: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                    />
+                  </div>
+                </div>
                 <div className="sm:col-span-2">
                   <label
-                    htmlFor="location"
+                    htmlFor="image"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Upload Image
@@ -583,6 +644,9 @@ export default function EventManagement() {
                   Event Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Slots
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -619,6 +683,12 @@ export default function EventManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {event.eventName}
                     </td>
+                    <td className="py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                      {
+                      event.membershipRequired
+                      ? event.slots
+                      : <span className="text-green-500 bg-green-50 p-2 rounded-full text-xs">Open for all</span>}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {displayDate}
                     </td>
@@ -632,7 +702,7 @@ export default function EventManagement() {
                       {event.location}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {event.requiresMembership ? "Yes" : "No"}
+                      {event.membershipRequired ? "Yes" : "No"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
