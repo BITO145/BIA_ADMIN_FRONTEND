@@ -42,6 +42,8 @@ export default function EventManagement() {
   const chaptersList = useSelector(selectChapters);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteEventId, setDeleteEventId] = useState(null);
+  const [selectedEventMembers, setSelectedEventMembers] = useState([]);
+  const [showMembersModal, setShowMembersModal] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -112,7 +114,9 @@ export default function EventManagement() {
       }
 
       if (newEvent.membershipRequired && newEvent.slots <= 0) {
-        toast.error("Slots must be greater than 0 for membership required events.");
+        toast.error(
+          "Slots must be greater than 0 for membership required events."
+        );
         return;
       }
 
@@ -127,10 +131,7 @@ export default function EventManagement() {
       formData.append("location", newEvent.location);
       formData.append("image", newEvent.image);
       formData.append("description", newEvent.description);
-      formData.append(
-        "membershipRequired",
-        newEvent.membershipRequired
-      );
+      formData.append("membershipRequired", newEvent.membershipRequired);
       formData.append("chapter", newEvent.chapter);
 
       const response = await addEventService(formData);
@@ -186,6 +187,36 @@ export default function EventManagement() {
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
+      {showMembersModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white max-w-md w-full p-6 rounded-lg shadow-lg relative">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              Event Members
+            </h3>
+            <ul className="space-y-2 max-h-64 overflow-y-auto">
+              {selectedEventMembers.length > 0 ? (
+                selectedEventMembers.map((member, idx) => (
+                  <li key={idx} className="border p-2 rounded-md bg-gray-50">
+                    <p className="text-sm font-semibold">{member.name}</p>
+                    <p className="text-sm text-gray-500">{member.email}</p>
+                  </li>
+                ))
+              ) : (
+                <li className="text-sm text-gray-500">
+                  No members registered.
+                </li>
+              )}
+            </ul>
+            <button
+              onClick={() => setShowMembersModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
@@ -413,7 +444,9 @@ export default function EventManagement() {
                       }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
                     />
-                    <span className="text-gray-400 text-xs">(If membership is not required then no need to add slots)</span>
+                    <span className="text-gray-400 text-xs">
+                      (If membership is not required then no need to add slots)
+                    </span>
                   </div>
                 </div>
                 <div>
@@ -684,10 +717,13 @@ export default function EventManagement() {
                       {event.eventName}
                     </td>
                     <td className="py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
-                      {
-                      event.membershipRequired
-                      ? event.slots
-                      : <span className="text-green-500 bg-green-50 p-2 rounded-full text-xs">Open for all</span>}
+                      {event.membershipRequired ? (
+                        event.slots
+                      ) : (
+                        <span className="text-green-500 bg-green-50 p-2 rounded-full text-xs">
+                          Open for all
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {displayDate}
@@ -704,13 +740,24 @@ export default function EventManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {event.membershipRequired ? "Yes" : "No"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end space-x-4">
+                      <button
+                        onClick={() => {
+                          setSelectedEventMembers(event.members || []);
+                          setShowMembersModal(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900"
+                        title="View Members"
+                      >
+                        <Users className="w-5 h-5" />
+                      </button>
                       <button
                         onClick={() => {
                           setDeleteEventId(event._id);
                           setShowDeleteModal(true);
                         }}
                         className="text-red-600 hover:text-red-900"
+                        title="Delete Event"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>

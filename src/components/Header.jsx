@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Users, CalendarDays, Building2, LogOut, Menu, X } from "lucide-react";
+import {
+  Users,
+  CalendarDays,
+  Building2,
+  LogOut,
+  Menu,
+  X,
+  Target,
+} from "lucide-react";
 
 const Header = ({ user, activeTab, setActiveTab, logout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,6 +48,11 @@ const Header = ({ user, activeTab, setActiveTab, logout }) => {
             )}
             <TabButton label="Events" icon={CalendarDays} tabKey="events" />
             <TabButton label="Chapters" icon={Building2} tabKey="chapters" />
+            <TabButton
+              label="Opportunities"
+              icon={Target}
+              tabKey="opportunities"
+            />
           </div>
 
           {/* User Info + Logout (Desktop) */}
@@ -84,6 +97,11 @@ const Header = ({ user, activeTab, setActiveTab, logout }) => {
             )}
             <TabButton label="Events" icon={CalendarDays} tabKey="events" />
             <TabButton label="Chapters" icon={Building2} tabKey="chapters" />
+            <TabButton
+              label="Opportunities"
+              icon={Target}
+              tabKey="opportunities"
+            />
 
             <div className="flex flex-col mt-4">
               <span className="text-gray-500 mb-2">
