@@ -7,6 +7,8 @@ import {
   Briefcase,
   CalendarDays,
   MapPin,
+  Users,
+  X,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -27,11 +29,14 @@ export default function OpportunityManagement() {
   const opportunities = useSelector(selectOpportunities);
   const loading = useSelector(selectOppLoading);
   const error = useSelector(selectOppError);
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [SelectedOppMembers, setSelectedOppMembers] = useState([]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newOpp, setNewOpp] = useState({
     oppName: "",
-    oppDate: "",
+    startDate: "",
+    endDate: "",
     location: "",
     image: null,
     description: "",
@@ -45,7 +50,8 @@ export default function OpportunityManagement() {
 
       const formData = new FormData();
       formData.append("oppName", newOpp.oppName);
-      formData.append("oppDate", newOpp.oppDate);
+      formData.append("startDate", newOpp.startDate);
+      formData.append("endDate", newOpp.endDate);
       formData.append("location", newOpp.location);
       formData.append("image", newOpp.image);
       formData.append("description", newOpp.description);
@@ -57,7 +63,8 @@ export default function OpportunityManagement() {
       setShowAddForm(false);
       setNewOpp({
         oppName: "",
-        oppDate: "",
+        startDate: "",
+        endDate: "",
         location: "",
         image: null,
         description: "",
@@ -101,6 +108,36 @@ export default function OpportunityManagement() {
         </button>
       </div>
 
+      {showMembersModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white max-w-md w-full p-6 rounded-lg shadow-lg relative">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              Event Members
+            </h3>
+            <ul className="space-y-2 max-h-64 overflow-y-auto">
+              {SelectedOppMembers.length > 0 ? (
+                SelectedOppMembers.map((member, idx) => (
+                  <li key={idx} className="border p-2 rounded-md bg-gray-50">
+                    <p className="text-sm font-semibold">{member.name}</p>
+                    <p className="text-sm text-gray-500">{member.email}</p>
+                  </li>
+                ))
+              ) : (
+                <li className="text-sm text-gray-500">
+                  No members registered.
+                </li>
+              )}
+            </ul>
+            <button
+              onClick={() => setShowMembersModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
           <p className="text-sm text-red-700">{error}</p>
@@ -134,7 +171,7 @@ export default function OpportunityManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Date
+                  Start Date
                 </label>
                 <div className="relative">
                   <CalendarDays
@@ -143,9 +180,29 @@ export default function OpportunityManagement() {
                   />
                   <input
                     type="date"
-                    value={newOpp.oppDate}
+                    value={newOpp.startDate}
                     onChange={(e) =>
-                      setNewOpp({ ...newOpp, oppDate: e.target.value })
+                      setNewOpp({ ...newOpp, startDate: e.target.value })
+                    }
+                    required
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-10 py-2"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  End Date
+                </label>
+                <div className="relative">
+                  <CalendarDays
+                    className="absolute left-3 top-2.5 text-gray-400"
+                    size={20}
+                  />
+                  <input
+                    type="date"
+                    value={newOpp.endDate}
+                    onChange={(e) =>
+                      setNewOpp({ ...newOpp, endDate: e.target.value })
                     }
                     required
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-10 py-2"
@@ -267,7 +324,10 @@ export default function OpportunityManagement() {
                 Location
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
+                Start Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                End Date
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Membership
@@ -287,12 +347,25 @@ export default function OpportunityManagement() {
                   {opp.location}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(opp.oppDate).toLocaleDateString()}
+                  {new Date(opp.startDate).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(opp.endDate).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {opp.membershipRequired ? "Yes" : "No"}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-6 py-4 space-x-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => {
+                      setSelectedOppMembers(opp.interestedMembers || []);
+                      setShowMembersModal(true);
+                    }}
+                    className="text-indigo-600 hover:text-indigo-900"
+                    title="View Members"
+                  >
+                    <Users className="w-5 h-5" />
+                  </button>
                   <button className="text-red-600 hover:text-red-900">
                     <Trash2 className="w-5 h-5" />
                   </button>
