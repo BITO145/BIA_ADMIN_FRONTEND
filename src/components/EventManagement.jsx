@@ -130,7 +130,6 @@ export default function EventManagement() {
 
       if (
         !newEvent.eventName ||
-        !newEvent.link ||
         !newEvent.eventDate ||
         !newEvent.eventStartTime ||
         !newEvent.eventEndTime ||
@@ -493,7 +492,6 @@ export default function EventManagement() {
                     <input
                       type="text"
                       id="link"
-                      required
                       value={newEvent.link}
                       onChange={(e) =>
                         setNewEvent({ ...newEvent, link: e.target.value })
