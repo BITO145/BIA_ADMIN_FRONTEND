@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   CalendarPlus,
@@ -32,14 +32,16 @@ import {
   getChaptersService,
 } from "../services/chapterService";
 import toast from "react-hot-toast";
+import { Cropper } from "react-cropper";
+import ImageCropperModal from "./ImageCropperModal";
 
 export default function EventManagement() {
   const dispatch = useDispatch();
   const eventsList = useSelector(selectEvents);
   const loading = useSelector(selectEventsLoading);
   const error = useSelector(selectEventsError);
-  // Fetch chapters from Redux
   const chaptersList = useSelector(selectChapters);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteEventId, setDeleteEventId] = useState(null);
   const [selectedEventMembers, setSelectedEventMembers] = useState([]);
@@ -48,23 +50,25 @@ export default function EventManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEvent, setNewEvent] = useState({
     eventName: "",
-    slots: 0, // default value via dropdown
+    slots: 0,
     link: "",
     eventStartTime: "",
     eventEndTime: "",
     eventDate: "",
     location: "",
     description: "",
-    membershipRequired: false, // default value via dropdown
-    chapter: "", // chapter id string
+    membershipRequired: false,
+    chapter: "",
+    image: null,
   });
 
-  // Fetch events on component mount
+  const [isCropperModalOpen, setIsCropperModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
+
   const fetchEvents = async () => {
     try {
       dispatch(setEventLoading(true));
       const response = await getEventsService();
-      // Expected response: { events: [...] }
       dispatch(setEvents(response.events));
     } catch (err) {
       console.error("Error fetching events:", err);
@@ -73,17 +77,16 @@ export default function EventManagement() {
       dispatch(setEventLoading(false));
     }
   };
+
   useEffect(() => {
     fetchEvents();
   }, [dispatch]);
 
-  // Also, fetch chapters if not already available
   useEffect(() => {
     const fetchChapters = async () => {
       if (chaptersList.length === 0) {
         try {
           const response = await getChaptersService();
-          // Expected response: { chapters: [...] }
           dispatch(setChapters(response.chapters));
         } catch (err) {
           console.error("Error fetching chapters:", err);
@@ -93,7 +96,33 @@ export default function EventManagement() {
     fetchChapters();
   }, [dispatch, chaptersList.length]);
 
-  // Handler to add an event using the create event API
+  const handleFileChangeForCropper = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result);
+        setIsCropperModalOpen(true);
+      };
+      reader.onerror = (error) => {
+        console.error("Error reading file:", error);
+        toast.error("Failed to read image file.");
+        setImageToCrop(null);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImageToCrop(null);
+    }
+    e.target.value = "";
+  };
+
+  const handleCroppedImage = (imageBlob) => {
+    setNewEvent({ ...newEvent, image: imageBlob });
+    setIsCropperModalOpen(false);
+    setImageToCrop(null);
+    toast.success("Image cropped and ready for upload!");
+  };
+
   const handleAddEvent = async (e) => {
     e.preventDefault();
     try {
@@ -109,7 +138,7 @@ export default function EventManagement() {
         !newEvent.chapter ||
         !newEvent.image
       ) {
-        toast.error("Please fill in all required fields.");
+        toast.error("Please fill in all required fields and upload an image.");
         return;
       }
 
@@ -120,7 +149,6 @@ export default function EventManagement() {
         return;
       }
 
-      // Prepare FormData payload
       const formData = new FormData();
       formData.append("eventName", newEvent.eventName);
       formData.append("slots", newEvent.slots);
@@ -129,7 +157,7 @@ export default function EventManagement() {
       formData.append("eventEndTime", newEvent.eventEndTime);
       formData.append("eventDate", newEvent.eventDate);
       formData.append("location", newEvent.location);
-      formData.append("image", newEvent.image);
+      formData.append("image", newEvent.image, "event_image.jpeg");
       formData.append("description", newEvent.description);
       formData.append("membershipRequired", newEvent.membershipRequired);
       formData.append("chapter", newEvent.chapter);
@@ -143,6 +171,8 @@ export default function EventManagement() {
         setShowAddForm(false);
         setNewEvent({
           eventName: "",
+          slots: 0,
+          link: "",
           eventStartTime: "",
           eventEndTime: "",
           eventDate: "",
@@ -150,7 +180,7 @@ export default function EventManagement() {
           description: "",
           membershipRequired: false,
           chapter: "",
-          image: "",
+          image: null,
         });
       }
     } catch (err) {
@@ -162,7 +192,6 @@ export default function EventManagement() {
     }
   };
 
-  // Handler to delete an event
   const handleDeleteEvent = async (id) => {
     dispatch(removeEvent(id));
     try {
@@ -170,7 +199,7 @@ export default function EventManagement() {
       const response = await deleteEventService(id);
       if (response.success) {
         toast.success("Event deleted successfully.");
-        fetchEvents(); // Refresh the events list
+        fetchEvents();
       } else {
         toast.error("Failed to delete event. Please try again.");
       }
@@ -475,38 +504,40 @@ export default function EventManagement() {
                 </div>
                 <div className="sm:col-span-2">
                   <label
-                    htmlFor="image"
+                    htmlFor="image-upload"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Upload Image
+                    Upload Event Image
                   </label>
-                  <div className="relative">
-                    <UploadCloud
-                      className="absolute left-3 top-2.5 text-gray-400"
-                      size={20}
-                    />
+                  <div className="relative mt-1">
                     <input
                       type="file"
-                      id="image"
-                      accept="image/*"
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files[0];
-                        if (file) {
-                          setNewEvent({ ...newEvent, image: file });
-                        }
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onChange={(e) =>
-                        setNewEvent({
-                          ...newEvent,
-                          image: e.target.files[0],
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white sm:text-sm pl-10 py-2"
+                      id="image-upload"
+                      accept="image/png, image/jpeg, image/jpg, image/gif, image/webp"
+                      className="hidden"
+                      onChange={handleFileChangeForCropper}
                     />
-                    <span className="text-sm text-gray-500">
-                      Upload an image for the event
+                    <button
+                      type="button"
+                      onClick={() =>
+                        document.getElementById("image-upload").click()
+                      }
+                      className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      <UploadCloud className="mr-2" size={20} />
+                      {newEvent.image ? "Change Image" : "Choose Image"}
+                    </button>
+                    {newEvent.image && (
+                      <p className="mt-2 text-sm text-gray-500">
+                        Image selected:{" "}
+                        <span className="font-semibold">
+                          {newEvent.image.name || "cropped_image.jpeg"}
+                        </span>{" "}
+                        (Ready to upload)
+                      </p>
+                    )}
+                    <span className="text-sm text-gray-500 block mt-1">
+                      Upload an image for the event (e.g., JPEG, PNG, GIF)
                     </span>
                   </div>
                 </div>
@@ -769,6 +800,13 @@ export default function EventManagement() {
           </table>
         </div>
       )}
+      <ImageCropperModal
+        isOpen={isCropperModalOpen}
+        onClose={() => setIsCropperModalOpen(false)}
+        imageSrc={imageToCrop}
+        onCropComplete={handleCroppedImage}
+        isLoading={loading}
+      />
     </div>
   );
 }
