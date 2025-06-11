@@ -53,6 +53,7 @@ const Header = ({ user, activeTab, setActiveTab, logout }) => {
               icon={Target}
               tabKey="opportunities"
             />
+            <TabButton label="Analytics" icon={Target} tabKey="analytics" />
           </div>
 
           {/* User Info + Logout (Desktop) */}

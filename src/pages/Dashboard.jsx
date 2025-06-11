@@ -9,6 +9,7 @@ import { logout, selectUser } from "../slices/auth/authSlice";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import OpportunityManagement from "../components/OpportunityManagement";
+import Analytics from "../components/Analytics";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("events");
@@ -44,6 +45,7 @@ const Dashboard = () => {
         {activeTab === "events" && <EventManagement />}
         {activeTab === "chapters" && <ChapterManagement />}
         {activeTab === "opportunities" && <OpportunityManagement />}
+        {activeTab === "analytics" && <Analytics />}
       </div>
     </div>
   );
