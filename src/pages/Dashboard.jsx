@@ -10,6 +10,7 @@ import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import OpportunityManagement from "../components/OpportunityManagement";
 import Analytics from "../components/Analytics";
+import MembersList from "../components/MembersList";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("events");
@@ -46,6 +47,7 @@ const Dashboard = () => {
         {activeTab === "chapters" && <ChapterManagement />}
         {activeTab === "opportunities" && <OpportunityManagement />}
         {activeTab === "analytics" && <Analytics />}
+        {activeTab === "members" && <MembersList />}
       </div>
     </div>
   );

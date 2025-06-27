@@ -48,6 +48,7 @@ const Header = ({ user, activeTab, setActiveTab, logout }) => {
             )}
             <TabButton label="Events" icon={CalendarDays} tabKey="events" />
             <TabButton label="Chapters" icon={Building2} tabKey="chapters" />
+            <TabButton label="Members" icon={Users} tabKey="members" />
             <TabButton
               label="Opportunities"
               icon={Target}
